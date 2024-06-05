@@ -23,3 +23,4 @@ function grid(side, gap, rows, cols) = let(
                 beta(r, c, grid_height, grid_width, side_length)]) 
     
     concat(grid_a, grid_b);
+    
