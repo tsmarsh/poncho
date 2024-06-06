@@ -1,23 +1,11 @@
-sqrt3 = sqrt(3);
-
-pattern  =  [       
-                     [0,0], [1,0], [2,0], 
-                     [0,1],        [2,1], [3,1],
-             [-1, 2],[0,2], [1,2], [2,2],
-                     [0,3],        [2,3],
-                    ];
-
-                    
-//neighbours = [[1,0], [1, -1], [0, -1],
-//              [-1,0], [-1,+1], [0, 1]];
-              
+sqrt3 = sqrt(3);              
  
- neighbours = [[1, 0], [-1,0], [0, 1]];
+neighbours = [[1, -1], [-1,-1], [0, 2]];
               
 function x(q, r) = 1.5 * q;
  
  
-function y(q, r) = sqrt3 * r + ((sqrt3 /2) * (q % 2));
+function y(q, r) = (sqrt3 * r); //- (sqrt3 * (q % 2)) / 2;
     
 
 function hexToCart(q, r) = [x(q,r), y(q,r), 0];
@@ -26,14 +14,12 @@ function hexPattern(coords) = [for (hc = coords) hexToCart(hc[0], hc[1])];
 
 function hex_points(rad) = [for(i = [0:60:300]) [rad * cos(i), rad * sin(i)]];
 
-function scale(x, list) = [for (i = list) [x[0] * i[0], x[1] * i[1], x[2] * i[2]]];
+function scale(x, list) = [for (i = list) [x.x * i.x, x.y / 2 * i.y, x.z * i.z]];
 
 module hexagon(side, height, scale = 1.2) {
     linear_extrude(height = height, scale = scale)
     polygon(hex_points(side));
 }
-
-
 
 
 function head_points(rad) = [
@@ -88,18 +74,18 @@ gap = 1;
 side = 5;
 height = 3;
 
-rows = 3;
-cols =8;
-grid = [for(y = [0:1:rows]) for(x = [0:1:cols]) [x,y]];
+rows = 6;
+cols = 6;
+grid_a = [for(y = [0:2:rows-1]) for(x = [0:2:cols-1]) [x,y]];
+grid_b = [for(y = [1:2:rows-1]) for(x = [1:2:cols-1]) [x,y]];
+grid = concat(grid_a, grid_b);
 
-strip = [for(y = [rows+1:1:rows+1]) for(x = [0:1:cols]) [x,y]];
 
-grid2 = [for(y = [rows+2:1:rows+2+rows]) for(x = [0:1:cols]) [x,y]];
 
 module shields(gap, side, height, pattern, cutout = false) {
-
+    
     coords = scale([gap + side, gap + side,0], hexPattern(pattern));
-    l = length(coords);
+    l = length(scale([gap + side, gap + side, 0], hexPattern([[0,0], [0,2]])));
     
     for(t = coords) {
         translate(t) {
@@ -119,18 +105,23 @@ module shields(gap, side, height, pattern, cutout = false) {
 module mesh(gap, side, height, pattern, fancy = false) {
     coords = scale([gap + side, gap + side,0], hexPattern(pattern));
     
-    l = length(coords);
+    l = length(scale([gap + side, gap + side, 0], hexPattern([[0,0], [0,2]])));
         
     echo(coords);
-    for(i = [0:1:len(coords)]) {
+    for(i = [0:1:len(coords)-1]) {
         if(fancy) {
             ns = [for(n = neighbours) [pattern[i].x + n.x, pattern[i].y + n.y]];
-            echo(search(ns, pattern));
+            s = search(ns, pattern);
+            translate(coords[i])
+                translate([0,0,height / 6])
+                    node(side * 0.8, l, height * (2/3), [is_num(s.z), is_num(s.y), is_num(s.x)]);
+        } else {
+            translate(coords[i]) {
+                translate([0,0,height / 6])
+                    node(side * 0.8, l, height * (2/3));
+            }
         }
-        translate(coords[i]) {
-            translate([0,0,height / 6])
-                node(side * 0.8, l, height * (2/3));
-        }
+
     }
 }
 
@@ -138,17 +129,4 @@ module mesh(gap, side, height, pattern, fancy = false) {
 color("blue", 1.0)
 shields(gap, side, height, grid);
 color("white", 1.0)
-mesh(gap, side, height, grid);
-
-
-color("red", 1.0)
-shields(gap, side, height, strip, true);
-color("black", 1.0)
-mesh(gap, side, height, strip, false);
-
-color("blue", 1.0)
-shields(gap, side, height, grid2);
-color("white", 1.0)
-mesh(gap, side, height, grid2);
-
-    //echo(search([[0,0], [0,1]], pattern));
+mesh(gap, side, height, grid, true);
