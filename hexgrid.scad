@@ -1,6 +1,9 @@
 sqrt3 = sqrt(3);              
  
 neighbours = [[1, -1], [-1,-1], [0, 2]];
+
+all_neighbours = [[0,2],[-1, 1], [-1, -1], [0, -2], [1, -1], [1,1]];
+
               
 function x(q, r) = 1.5 * q;
  
@@ -59,13 +62,13 @@ module node(side, l, h, neighbours = [true, true, true]) {
 
 }
 
-module star(side, l, h) {    
-    connector(side, l,  h, 0);
-    connector(side, l,  h, 60);
-    connector(side, l, h, 120);
-    connector(side, l,  h, 180);
-    connector(side, l, h, 240);
-    connector(side, l,  h, 300);
+module star(side, l, h, neighbours = [true, true, true, true, true, true, true]) {
+    if(neighbours[0]) connector(side, l,  h, 0);
+    if(neighbours[1]) connector(side, l,  h, 60);
+    if(neighbours[2]) connector(side, l, h, 120);
+    if(neighbours[3]) connector(side, l,  h, 180);
+    if(neighbours[4]) connector(side, l, h, 240);
+    if(neighbours[5]) connector(side, l,  h, 300);
 
 }
 
@@ -82,17 +85,26 @@ grid = concat(grid_a, grid_b);
 
 
 
-module shields(gap, side, height, pattern, cutout = false) {
+module shields(gap, side, height, pattern, cutout = false, fancy = false) {
     
     coords = scale([gap + side, gap + side,0], hexPattern(pattern));
     l = length(scale([gap + side, gap + side, 0], hexPattern([[0,0], [0,2]])));
     
-    for(t = coords) {
-        translate(t) {
+    for(i = [0:1:len(coords)-1]) {
+        translate(coords[i]) {
             difference() {
                 hexagon(side, height, 1);
-                 translate([0,0,height / 12])
-                    star(side * 0.85, l, height * (5/6));
+                if(fancy) {
+                    ns = [for(n = all_neighbours) [pattern[i].x + n.x, pattern[i].y + n.y]];
+                    s = search(ns, pattern);
+                    translate([0,0,height / 12])
+                        star(side * 0.85, l, height * (5/6), [is_num(s[0]), is_num(s[1]), is_num(s[2]), 
+                                                              is_num(s[3]), is_num(s[4]), is_num(s[5])]);
+                }else{
+                    translate([0,0,height / 12])
+                        star(side * 0.85, l, height * (5/6));
+                }
+            
               if(cutout) {
                  translate([-side, -side ,height / 2])
                     cube(side * 2);
@@ -107,7 +119,6 @@ module mesh(gap, side, height, pattern, fancy = false) {
     
     l = length(scale([gap + side, gap + side, 0], hexPattern([[0,0], [0,2]])));
         
-    echo(coords);
     for(i = [0:1:len(coords)-1]) {
         if(fancy) {
             ns = [for(n = neighbours) [pattern[i].x + n.x, pattern[i].y + n.y]];
@@ -125,8 +136,9 @@ module mesh(gap, side, height, pattern, fancy = false) {
     }
 }
 
+echo(grid);
 
 color("blue", 1.0)
-shields(gap, side, height, grid);
+shields(gap, side, height, grid, fasle, true);
 color("white", 1.0)
 mesh(gap, side, height, grid, true);
