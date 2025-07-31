@@ -1,9 +1,16 @@
+gap = 1;
+side = 5;
+height = 3;
+
+rows = 20;
+cols = 20;
+
+
 sqrt3 = sqrt(3);              
  
 neighbours = [[1, -1], [-1,-1], [0, 2]];
 
 all_neighbours = [[0,2],[-1, 1], [-1, -1], [0, -2], [1, -1], [1,1]];
-
               
 function x(q, r) = 1.5 * q;
  
@@ -72,13 +79,6 @@ module star(side, l, h, neighbours = [true, true, true, true, true, true, true])
 
 }
 
-
-gap = 1;
-side = 5;
-height = 3;
-
-rows = 6;
-cols = 6;
 grid_a = [for(y = [0:2:rows-1]) for(x = [0:2:cols-1]) [x,y]];
 grid_b = [for(y = [1:2:rows-1]) for(x = [1:2:cols-1]) [x,y]];
 grid = concat(grid_a, grid_b);
@@ -114,6 +114,18 @@ module shields(gap, side, height, pattern, cutout = false, fancy = false) {
     }
 }
 
+module hexes(grid, side, height, pattern) {
+    
+    coords = scale([grid, grid,0], hexPattern(pattern));
+
+    
+    for(i = [0:1:len(coords)-1]) {
+        translate(coords[i]) {
+            hexagon(side, height, 1);
+        }
+    }
+}
+
 module mesh(gap, side, height, pattern, fancy = false) {
     coords = scale([gap + side, gap + side,0], hexPattern(pattern));
     
@@ -139,6 +151,22 @@ module mesh(gap, side, height, pattern, fancy = false) {
 echo(grid);
 
 color("blue", 1.0)
-shields(gap, side, height, grid, false, true);
-color("white", 1.0)
-mesh(gap, side, height, grid, true);
+union() {
+difference() {
+    hexes(gap+side, side, height, grid);
+    translate([0,0,height / 2 - height / 8])
+        hexes(gap+side, side+gap, height/3, grid);
+}
+hexes(gap+side, side/4, height, grid);
+}
+
+color("red", 1.0)
+difference() {
+    translate([0,0,height / 2 - height / 8])
+        hexes(gap+side, side+gap, height/4, grid);
+    hexes(gap+side, side/2, height, grid);
+
+}
+
+
+

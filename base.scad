@@ -82,7 +82,7 @@ module comb(rows, columns, side, height) {
     }
 }
 
-comb(0,0,10,10);
+//comb(0,0,10,10);
 
 module web(side, scale, height, g) {
     min_x = min_i(g, X);
